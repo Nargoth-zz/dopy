@@ -7,6 +7,10 @@
 ### Date (last update): 11.07.2016 (11.07.2016)
 ##############################
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+from tqdm import tqdm_notebook
 
 # Plot functions:
 def plot_roc_curve(clfs, X, y, labels=None, scale_xy=[[0.0, 1.0],[0.0, 1.0]]):
