@@ -6,6 +6,7 @@
 ###
 ### Date (last update): 11.07.2016 (11.07.2016)
 ##############################
+import matplotlib.pyplot as plt
 
 # Plot functions:
 def plot_roc_curve(clfs, X, y, labels=None, scale_xy=[[0.0, 1.0],[0.0, 1.0]]):
@@ -54,8 +55,8 @@ def plot_roc_curve(clfs, X, y, labels=None, scale_xy=[[0.0, 1.0],[0.0, 1.0]]):
     plt.show()
     
 
-def plot_train_test_comparison(clf, X_train, y_train, X_test=None, y_test=None, bins=50, title=None):
-    """Plots probability distributions from training (and testing) dataset.
+def plot_classifier_output(clf, X_train, y_train, X_test=None, y_test=None, bins=50, title=None):
+    """Plots classifier probability distributions from training (and testing) dataset.
     
     Keyword arguments:
         clf -- trained classifier
@@ -67,11 +68,14 @@ def plot_train_test_comparison(clf, X_train, y_train, X_test=None, y_test=None, 
         title -- title of the plot (default: None)
     """    
     # Calculate probabilities
+    probs_test = None
     try:
         probs_train = clf.decision_function(X_train)
+#        if not X_test:
         probs_test = clf.decision_function(X_test)
     except:
         probs_train = clf.predict_proba(X_train)[:, 1]
+#        if not X_test:
         probs_test = clf.predict_proba(X_test)[:, 1]
 
     # Plot training distribution
@@ -84,15 +88,15 @@ def plot_train_test_comparison(clf, X_train, y_train, X_test=None, y_test=None, 
     center = (binning[:-1] + binning[1:]) / 2
 
     # 1 = Signal, 0 = Background
-    if X_test != None and y_test != None:
-        for i, label, color in zip(range(1, -1, -1), ['SIG (Test)', 'BKG (Test)'], ['b', 'r']):
+#    if X_test != None and y_test != None:
+    for i, label, color in zip(range(1, -1, -1), ['SIG (Test)', 'BKG (Test)'], ['b', 'r']):
         
-            hist, _ = np.histogram(probs_test[np.array(y_test) == i],
-                                   bins=binning, normed=True)
-            scale = len(probs_test[np.array(y_test) == i]) / sum(hist)
-            err = np.sqrt(hist * scale) / scale
+        hist, _ = np.histogram(probs_test[np.array(y_test) == i],
+                               bins=binning, normed=True)
+        scale = len(probs_test[np.array(y_test) == i]) / sum(hist)
+        err = np.sqrt(hist * scale) / scale
         
-            plt.errorbar(center, hist, yerr=err, fmt='o', c=color, label=label)
+        plt.errorbar(center, hist, yerr=err, fmt='o', c=color, label=label)
 
     plt.legend(loc='best')
     plt.ylim(0)
@@ -125,7 +129,7 @@ def plot_bdt_vars(df, flags, sig_label='Signal MC (Sig)', bkg_label='Data Upper 
         plt.subplot(plots_in_y, plots_in_x, i)
         _, binning, _ = plt.hist(df[var][flags == 1].as_matrix(), bins=50, alpha=0.6, normed=True, 
                                  label=sig_label, **kwargs);
-        plt.hist(df[var][flags == 0].as_matrix(), bins=binning, alpha=0.6, normed=True, bkg_label,
+        plt.hist(df[var][flags == 0].as_matrix(), bins=binning, alpha=0.6, normed=True, label=bkg_label,
                  **kwargs);
         plt.xlabel(var + plot_appendix)
         plt.legend(loc='best')
