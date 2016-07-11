@@ -16,4 +16,24 @@ Warning: Most (plot-)functions in `sklearn_utils` are written for iPython Notebo
 
 ### Tips
 
+If your folder structure looks like this
+
+|-sklearn_utils
+|---sklearn_utils.py
+|---README.md
+|-work_folder
+|---myscript.py
+
+and you want to import `sklearn_utils` in your `myscript.py`, try this:
+
+```
+# Other imports here...
+
+import sys
+sys.path.append('..')
+from sklearn_utils.sklearn_utils import plot_roc_curve
+```
+
+
+
 
