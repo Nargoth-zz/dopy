@@ -125,19 +125,31 @@ def plot_bdt_vars(df, flags, sig_label='Signal MC (Sig)', bkg_label='Data Upper 
     if len(df) != len(flags):
         raise ValueError('DataFrame of features and flags have to be of equally lenght! {} vs {}'.format(
             len(df), len(flags)))
+    flags = np.array(flags)
     plots_in_x = 2
     plots_in_y = int(round(len(df.columns) / 2 + 0.4))
     
     plt.figure(figsize=(16, 8*plots_in_y))
     for i, var in tqdm_notebook(enumerate(df.columns, start=1), total=len(df.columns)):
         plt.subplot(plots_in_y, plots_in_x, i)
-        _, binning, _ = plt.hist(df[var][flags == 1].as_matrix(), bins=50, alpha=0.6, normed=True, 
+        _, binning, _ = plt.hist(df[var][flags == 1], bins=50, alpha=0.6, normed=True, 
                                  label=sig_label, **kwargs);
-        plt.hist(df[var][flags == 0].as_matrix(), bins=binning, alpha=0.6, normed=True, label=bkg_label,
+        plt.hist(df[var][flags == 0], bins=binning, alpha=0.6, normed=True, label=bkg_label,
                  **kwargs);
         plt.xlabel(var + plot_appendix)
         plt.legend(loc='best')
     plt.show()
+
+def plot_feature_importances(clf, X):
+    import seaborn
+    importances_sorted = sorted(zip(clf.feature_importances_, X.columns), reverse=True)
+    plt.figure()
+    plt.title("Feature importances")
+    plt.bar(range(X.shape[1]), [val[0] for val in importances_sorted],
+                color="r", alpha=0.5, align="center")
+    plt.xticks(range(X.shape[1]),X.columns, rotation=90)
+    plt.xlim([-1, X.shape[1]])
+    plt.show()    
     
     
 # Calculations:
