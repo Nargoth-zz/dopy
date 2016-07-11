@@ -19,9 +19,13 @@ Warning: Most (plot-)functions in `sklearn_utils` are written for iPython Notebo
 If your folder structure looks like this
 
 |-sklearn_utils
+
 |---sklearn_utils.py
+
 |---README.md
+
 |-work_folder
+
 |---myscript.py
 
 and you want to import `sklearn_utils` in your `myscript.py`, try this:
