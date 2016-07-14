@@ -157,7 +157,7 @@ def plot_feature_importances(clf, X):
     
     
 # Calculations:
-def train_kfold(clf_type, X, y, folds=6, show_plots=False, write_decisions=False, **kwargs):
+def train_kfold(clf_type, X, y, folds=6, show_plots=False, write_decisions=False, state=0, **kwargs):
     """Uses kFolding to train a certain classifier.
     
     Keyword arguments:
