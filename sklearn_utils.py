@@ -197,7 +197,7 @@ def train_kfold(clf_type, X, y, folds=6, show_plots=False, write_decisions=False
         elif clf_type == 'GradientBoostingClassifier':
             clf = GradientBoostingClassifier(random_state=state)
             
-        clf.fit(X_train.as_matrix(), y_train, sample_weight=res_scaled.iloc[train_index].sig_bkg_weights.as_matrix())
+        clf.fit(X_train.as_matrix(), y_train)
         
         if show_plots:
             plot_train_test_comparison(clf, X_train, y_train, X_test.as_matrix(), y_test.as_matrix(), 
