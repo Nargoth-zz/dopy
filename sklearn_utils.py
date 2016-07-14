@@ -11,6 +11,8 @@ import numpy as np
 import pandas as pd
 
 from sklearn.cross_validation import KFold
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.ensemble import GradientBoostingClassifier
 
 from tqdm import tqdm_notebook
 
