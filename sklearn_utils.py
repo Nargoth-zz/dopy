@@ -17,7 +17,22 @@ from sklearn.metrics import roc_curve, roc_auc_score
 from tqdm import tqdm_notebook
 
 # Plot functions:
-def plot_roc_curve(clfs, X, y, labels=None, scale_xy=[[0.0, 1.0],[0.0, 1.0]]):
+def figure_handler(save, fig_path):
+    """Uses plt.savefig() or plt.show(), depending on arguments
+
+    Keyword arguments:
+        save -- True or False
+        fig_path -- Path where to save figure
+    """
+
+    if save:
+        plt.savefig(fig_path)
+
+    elif ~save:
+        plt.show()
+
+
+def plot_roc_curve(clfs, X, y, labels=None, save=False, scale_xy=[[0.0, 1.0],[0.0, 1.0]]):
     """Plots a roc curve for one or multiple classifiers using array of features and corresponding flags.
 
     Keyword arguments:
@@ -25,6 +40,7 @@ def plot_roc_curve(clfs, X, y, labels=None, scale_xy=[[0.0, 1.0],[0.0, 1.0]]):
         X -- array of features
         y -- corresponding flags
         labels -- plot labels, '{}' will be replaced with the roc auc score (default: 'ROC curve (area = {:.4f})')
+        save -- save or only show plot (default: False)
     """
     import collections
 
@@ -63,7 +79,7 @@ def plot_roc_curve(clfs, X, y, labels=None, scale_xy=[[0.0, 1.0],[0.0, 1.0]]):
     plt.show()
 
 
-def plot_classifier_output(clf, X_train, y_train, X_test=None, y_test=None, bins=50, title=None):
+def plot_classifier_output(clf, X_train, y_train, X_test=None, y_test=None, bins=50, title=None, save=False):
     """Plots classifier probability distributions from training (and testing) dataset.
 
     Keyword arguments:
@@ -74,6 +90,7 @@ def plot_classifier_output(clf, X_train, y_train, X_test=None, y_test=None, bins
         y_test -- corresponding testing flags, optional (default: False)
         bins -- number of bins (default: 50)
         title -- title of the plot (default: None)
+        save -- save or only show plot (default: False)
     """
     # Calculate probabilities
     probs_test = None
@@ -114,7 +131,7 @@ def plot_classifier_output(clf, X_train, y_train, X_test=None, y_test=None, bins
 
 
 def plot_bdt_vars(df, flags, sig_label='Signal MC (Sig)', bkg_label='Data Upper SB (Bkg)',
-                  plot_appendix='', **kwargs):
+                  plot_appendix='', save=False, **kwargs):
     """Plots signal vs. background distributions.
 
     Keyword arguments:
@@ -123,6 +140,7 @@ def plot_bdt_vars(df, flags, sig_label='Signal MC (Sig)', bkg_label='Data Upper 
         sig_label -- label of signal distribution (default: 'Signal MC (Sig)')
         bkg_label -- label of background distribution (default: 'Data Upper SB (Bkg)')
         plot_appendix -- appendix to the plot title (default: '')
+        save -- save or only show plot (default: False)
         kwargs -- additional key word arguments for histogram plots
     """
     import seaborn
@@ -142,7 +160,9 @@ def plot_bdt_vars(df, flags, sig_label='Signal MC (Sig)', bkg_label='Data Upper 
                  **kwargs);
         plt.xlabel(var + plot_appendix)
         plt.legend(loc='best')
-    plt.show()
+
+    figure_handler(save, path)
+
 
 def plot_feature_importances(clf, X):
     import seaborn
