@@ -4,11 +4,13 @@
 ###
 ### Author: Timon Schmelzer (timon.schmelzer@tu-dortmund.de)
 ###
-### Date (last update): 11.07.2016 (11.07.2016)
+### Date (last update): 11.07.2016 (19.07.2016)
 ##############################
-import matplotlib.pyplot as plt
+import os
+import datetime
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 from sklearn.cross_validation import KFold
 from sklearn.ensemble import AdaBoostClassifier, GradientBoostingClassifier
@@ -16,8 +18,10 @@ from sklearn.metrics import roc_curve, roc_auc_score
 
 from tqdm import tqdm_notebook
 
+B2KSKS_FIGURES = '/net/lhcb-tank/user_area/mdemmer/BNOC_DATASTORE/figures/B2KSKS'
+
 # Plot functions:
-def figure_handler(save, fig_path):
+def figure_handler(save, fig_path=None):
     """Uses plt.savefig() or plt.show(), depending on arguments
 
     Keyword arguments:
@@ -27,8 +31,7 @@ def figure_handler(save, fig_path):
 
     if save:
         plt.savefig(fig_path)
-
-    elif ~save:
+    elif not save:
         plt.show()
 
 
@@ -76,7 +79,12 @@ def plot_roc_curve(clfs, X, y, labels=None, save=False, scale_xy=[[0.0, 1.0],[0.
         plt.plot(fpr, tpr, label=label.format(roc_auc))
         plt.legend(loc="lower right")
 
-    plt.show()
+    if save:
+        filename = 'roc_curve-'+datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+        fig_path = os.path.join(B2KSKS_FIGURES, filename)
+        figure_handler(save, fig_path)
+    elif not save:
+        figure_handler(save)
 
 
 def plot_classifier_output(clf, X_train, y_train, X_test=None, y_test=None, bins=50, title=None, save=False):
@@ -127,11 +135,20 @@ def plot_classifier_output(clf, X_train, y_train, X_test=None, y_test=None, bins
     plt.ylim(0)
     if title != None:
         plt.title(title)
-    plt.show()
+
+    if save:
+        if title != None:
+            filename = 'classifier_output-'+str(title)+'-'+datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+        else:
+            filename = 'classifier_output-'+'-'+datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+        fig_path = os.path.join(B2KSKS_FIGURES, filename)
+        figure_handler(save, fig_path)
+    elif not save:
+        figure_handler(save)
 
 
 def plot_bdt_vars(df, flags, sig_label='Signal MC (Sig)', bkg_label='Data Upper SB (Bkg)',
-                  plot_appendix='', save=False, **kwargs):
+                  sig_name='SigMC', bkg_name='DataUpperSB', plot_appendix='', save=False, **kwargs):
     """Plots signal vs. background distributions.
 
     Keyword arguments:
@@ -161,7 +178,12 @@ def plot_bdt_vars(df, flags, sig_label='Signal MC (Sig)', bkg_label='Data Upper 
         plt.xlabel(var + plot_appendix)
         plt.legend(loc='best')
 
-    figure_handler(save, path)
+    if save:
+        filename = 'bdt_vars-'+sig_name+'_vs_'+bkg_name+'-'+datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+        fig_path = os.path.join(B2KSKS_FIGURES, filename)
+        figure_handler(save, fig_path)
+    elif not save:
+        figure_handler(save)
 
 
 def plot_feature_importances(clf, X):
@@ -173,7 +195,13 @@ def plot_feature_importances(clf, X):
                 color="r", alpha=0.5, align="center")
     plt.xticks(range(X.shape[1]),X.columns, rotation=90)
     plt.xlim([-1, X.shape[1]])
-    plt.show()
+
+    if save:
+        filename = 'feature_importances-'+datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+        fig_path = os.path.join(B2KSKS_FIGURES, filename)
+        figure_handler(save, fig_path)
+    elif not save:
+        figure_handler(save)
 
 
 # Calculations:
