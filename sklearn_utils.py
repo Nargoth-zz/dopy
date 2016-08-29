@@ -30,7 +30,10 @@ def figure_handler(save, fig_path=None):
     """
 
     if save:
-        plt.savefig(fig_path)
+        from matplotlib.backends.backend_pdf import PdfPages
+        pp = PdfPages(fig_path)
+        pp.savefig()
+        pp.close()
     elif not save:
         plt.show()
 
@@ -80,7 +83,7 @@ def plot_roc_curve(clfs, X, y, labels=None, save=False, scale_xy=[[0.0, 1.0],[0.
         plt.legend(loc="lower right")
 
     if save:
-        filename = 'roc_curve-'+datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+        filename = 'roc_curve-'+datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')+'.pdf'
         fig_path = os.path.join(B2KSKS_FIGURES, filename)
         figure_handler(save, fig_path)
     elif not save:
@@ -138,9 +141,9 @@ def plot_classifier_output(clf, X_train, y_train, X_test=None, y_test=None, bins
 
     if save:
         if title != None:
-            filename = 'classifier_output-'+str(title)+'-'+datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+            filename = 'classifier_output-'+str(title)+'-'+datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')+'.pdf'
         else:
-            filename = 'classifier_output-'+'-'+datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+            filename = 'classifier_output-'+'-'+datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')+'.pdf'
         fig_path = os.path.join(B2KSKS_FIGURES, filename)
         figure_handler(save, fig_path)
     elif not save:
@@ -179,7 +182,7 @@ def plot_bdt_vars(df, flags, sig_label='Signal MC (Sig)', bkg_label='Data Upper 
         plt.legend(loc='best')
 
     if save:
-        filename = 'bdt_vars-'+sig_name+'_vs_'+bkg_name+'-'+datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+        filename = 'bdt_vars-'+sig_name+'_vs_'+bkg_name+'-'+datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')+'.pdf'
         fig_path = os.path.join(B2KSKS_FIGURES, filename)
         figure_handler(save, fig_path)
     elif not save:
@@ -197,7 +200,7 @@ def plot_feature_importances(clf, X):
     plt.xlim([-1, X.shape[1]])
 
     if save:
-        filename = 'feature_importances-'+datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+        filename = 'feature_importances-'+datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')+'.pdf'
         fig_path = os.path.join(B2KSKS_FIGURES, filename)
         figure_handler(save, fig_path)
     elif not save:
