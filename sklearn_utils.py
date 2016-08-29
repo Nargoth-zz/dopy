@@ -16,7 +16,6 @@ from sklearn.cross_validation import KFold
 from sklearn.ensemble import AdaBoostClassifier, GradientBoostingClassifier
 from sklearn.metrics import roc_curve, roc_auc_score
 
-import seaborn
 
 from tqdm import tqdm_notebook
 
@@ -154,6 +153,7 @@ def plot_classifier_output(clf, X_train, y_train, X_test=None, y_test=None, bins
         figure_handler(save)
 
 
+
 def plot_bdt_vars(df, flags, sig_label='Signal MC (Sig)', bkg_label='Data Upper SB (Bkg)',
                   sig_name='SigMC', bkg_name='DataUpperSB', plot_appendix='', save=False, 
                   savepath_base='', **kwargs):
@@ -179,9 +179,21 @@ def plot_bdt_vars(df, flags, sig_label='Signal MC (Sig)', bkg_label='Data Upper 
     plt.figure(figsize=(16, 8*plots_in_y))
     for i, var in tqdm_notebook(enumerate(df.columns, start=1), total=len(df.columns)):
         plt.subplot(plots_in_y, plots_in_x, i)
-        _, binning, _ = plt.hist(df[var][flags == 1], alpha=0.6, normed=True,
-                                 label=sig_label, **kwargs);
-        plt.hist(df[var][flags == 0], bins=binning, alpha=0.6, normed=True, label=bkg_label);
+
+        import utils.statistics
+        y, bins = np.histogram(df[var][flags == 1], bins=100)
+        errors = utils.statistics.poissonian_cls(y)
+        y, errors = utils.statistics.normalize_histogram(y, errors)
+
+        import utils.plotting
+        utils.plotting.plot_steps_with_errors(bins, y, errors, color = None, label = None, alpha = 0.25)
+
+        y, bins = np.histogram(df[var][flags == 0], bins=100)
+        errors = utils.statistics.poissonian_cls(y)
+        y, errors = utils.statistics.normalize_histogram(y, errors)
+
+        utils.plotting.plot_steps_with_errors(bins, y, errors, color = None, label = None, alpha = 0.25)
+
         plt.xlabel(var + plot_appendix)
         plt.legend(loc='best')
 
