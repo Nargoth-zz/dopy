@@ -4,7 +4,7 @@
 ###
 ### Author: Timon Schmelzer (timon.schmelzer@tu-dortmund.de)
 ###
-### Date (last update): 11.07.2016 (19.07.2016)
+### Date (last update): 11.07.2016 (05.08.2016)
 ##############################
 import os
 import datetime
@@ -16,9 +16,9 @@ from sklearn.cross_validation import KFold
 from sklearn.ensemble import AdaBoostClassifier, GradientBoostingClassifier
 from sklearn.metrics import roc_curve, roc_auc_score
 
-from tqdm import tqdm_notebook
+import seaborn
 
-B2KSKS_FIGURES = '/net/lhcb-tank/user_area/mdemmer/BNOC_DATASTORE/figures/B2KSKS'
+from tqdm import tqdm_notebook
 
 # Plot functions:
 def figure_handler(save, fig_path=None):
@@ -35,7 +35,8 @@ def figure_handler(save, fig_path=None):
         plt.show()
 
 
-def plot_roc_curve(clfs, X, y, labels=None, save=False, scale_xy=[[0.0, 1.0],[0.0, 1.0]]):
+def plot_roc_curve(clfs, Xs, ys, labels=None, save=False, scale_xy=[[0.0, 1.0],[0.0, 1.0]],
+                   savepath_base=''):
     """Plots a roc curve for one or multiple classifiers using array of features and corresponding flags.
 
     Keyword arguments:
@@ -44,6 +45,7 @@ def plot_roc_curve(clfs, X, y, labels=None, save=False, scale_xy=[[0.0, 1.0],[0.
         y -- corresponding flags
         labels -- plot labels, '{}' will be replaced with the roc auc score (default: 'ROC curve (area = {:.4f})')
         save -- save or only show plot (default: False)
+        savepath_base -- save plots here (default: '')
     """
     import collections
 
@@ -55,39 +57,43 @@ def plot_roc_curve(clfs, X, y, labels=None, save=False, scale_xy=[[0.0, 1.0],[0.
 
     if not isinstance(labels, collections.MutableSequence):
         labels = [labels]
-
-    # Check input data
-    if len(labels) != len(clfs):
-        raise ValueError('Number of classifier and labels have to be the same! {} vs. {}'.format(
-            len(clfs), len(labels)))
+        
+    if not isinstance(Xs, collections.MutableSequence):
+        Xs = [Xs]
+        
+    if not isinstance(clfs, collections.MutableSequence):
+        ys = [ys]
 
     # Calculate roc curves, roc_auc and plot it
-    print(len(clfs), len(labels))
-    for i, (clf, label) in enumerate(zip(clfs, labels)):
-        if len(X) != len(y):
-            raise ValueError('Lenght of dataset and corresponding flags have to be the same! {} vs. {}'.format(
-                len(X), len(y)))
-        dec = clf.predict_proba(X)[:, 1]
-        fpr, tpr, _ = roc_curve(y, dec)
-        roc_auc = roc_auc_score(y, dec)
+    i = 0
+    for clf in clfs:
         if i == 0:
             plt.plot([0, 1], [0, 1], 'k--', label='Random guessing')
             plt.xlim([scale_xy[0][0], scale_xy[0][1]])
             plt.ylim([scale_xy[1][0], scale_xy[1][1]])
             plt.xlabel('False Positive Rate')
             plt.ylabel('True Positive Rate')
-        plt.plot(fpr, tpr, label=label.format(roc_auc))
-        plt.legend(loc="lower right")
+        for X, y in zip(Xs, ys):
+            if len(X) != len(y):
+                raise ValueError('Lenght of dataset and corresponding flags have to be the same! {} vs. {}'.format(
+                    len(X), len(y)))
+            dec = clf.predict_proba(X)[:, 1]
+            fpr, tpr, _ = roc_curve(y, dec)
+            roc_auc = roc_auc_score(y, dec)
+            plt.plot(fpr, tpr, label=labels[i].format(roc_auc))
+            plt.legend(loc="lower right")
+            i += 1
 
     if save:
         filename = 'roc_curve-'+datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
-        fig_path = os.path.join(B2KSKS_FIGURES, filename)
+        fig_path = os.path.join(savepath_base, filename)
         figure_handler(save, fig_path)
     elif not save:
         figure_handler(save)
 
 
-def plot_classifier_output(clf, X_train, y_train, X_test=None, y_test=None, bins=50, title=None, save=False):
+def plot_classifier_output(clf, X_train, y_train, X_test=None, y_test=None, bins=50, title=None, save=False,
+                           savepath_base=''):
     """Plots classifier probability distributions from training (and testing) dataset.
 
     Keyword arguments:
@@ -99,6 +105,7 @@ def plot_classifier_output(clf, X_train, y_train, X_test=None, y_test=None, bins
         bins -- number of bins (default: 50)
         title -- title of the plot (default: None)
         save -- save or only show plot (default: False)
+        savepath_base -- save plots here (default: '')
     """
     # Calculate probabilities
     probs_test = None
@@ -141,14 +148,15 @@ def plot_classifier_output(clf, X_train, y_train, X_test=None, y_test=None, bins
             filename = 'classifier_output-'+str(title)+'-'+datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
         else:
             filename = 'classifier_output-'+'-'+datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
-        fig_path = os.path.join(B2KSKS_FIGURES, filename)
+        fig_path = os.path.join(savepath_base, filename)
         figure_handler(save, fig_path)
     elif not save:
         figure_handler(save)
 
 
 def plot_bdt_vars(df, flags, sig_label='Signal MC (Sig)', bkg_label='Data Upper SB (Bkg)',
-                  sig_name='SigMC', bkg_name='DataUpperSB', plot_appendix='', save=False, **kwargs):
+                  sig_name='SigMC', bkg_name='DataUpperSB', plot_appendix='', save=False, 
+                  savepath_base='', **kwargs):
     """Plots signal vs. background distributions.
 
     Keyword arguments:
@@ -158,9 +166,9 @@ def plot_bdt_vars(df, flags, sig_label='Signal MC (Sig)', bkg_label='Data Upper 
         bkg_label -- label of background distribution (default: 'Data Upper SB (Bkg)')
         plot_appendix -- appendix to the plot title (default: '')
         save -- save or only show plot (default: False)
+        savepath_base -- save plots here (default: '')
         kwargs -- additional key word arguments for histogram plots
     """
-    import seaborn
     if len(df) != len(flags):
         raise ValueError('DataFrame of features and flags have to be of equally lenght! {} vs {}'.format(
             len(df), len(flags)))
@@ -171,34 +179,37 @@ def plot_bdt_vars(df, flags, sig_label='Signal MC (Sig)', bkg_label='Data Upper 
     plt.figure(figsize=(16, 8*plots_in_y))
     for i, var in tqdm_notebook(enumerate(df.columns, start=1), total=len(df.columns)):
         plt.subplot(plots_in_y, plots_in_x, i)
-        _, binning, _ = plt.hist(df[var][flags == 1], bins=50, alpha=0.6, normed=True,
+        _, binning, _ = plt.hist(df[var][flags == 1], alpha=0.6, normed=True,
                                  label=sig_label, **kwargs);
-        plt.hist(df[var][flags == 0], bins=binning, alpha=0.6, normed=True, label=bkg_label,
-                 **kwargs);
+        plt.hist(df[var][flags == 0], bins=binning, alpha=0.6, normed=True, label=bkg_label);
         plt.xlabel(var + plot_appendix)
         plt.legend(loc='best')
 
     if save:
         filename = 'bdt_vars-'+sig_name+'_vs_'+bkg_name+'-'+datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
-        fig_path = os.path.join(B2KSKS_FIGURES, filename)
+        fig_path = os.path.join(savepath_base, filename)
         figure_handler(save, fig_path)
     elif not save:
         figure_handler(save)
 
 
-def plot_feature_importances(clf, X):
-    import seaborn
+def plot_feature_importances(clf, X, save=False, savepath_base=''):
+    # Number of features
+    num_features = len(X.columns)
+    # To sort for maximum feature importances
     importances_sorted = sorted(zip(clf.feature_importances_, X.columns), reverse=True)
+    # Transpose list the python way (?!)
+    importances_sorted_inv = list(zip(*importances_sorted))
     plt.figure()
     plt.title("Feature importances")
-    plt.bar(range(X.shape[1]), [val[0] for val in importances_sorted],
+    plt.bar(range(num_features), importances_sorted_inv[0],
                 color="r", alpha=0.5, align="center")
-    plt.xticks(range(X.shape[1]),X.columns, rotation=90)
-    plt.xlim([-1, X.shape[1]])
+    plt.xticks(range(num_features), importances_sorted_inv[1], rotation=90)
+    plt.xlim([-1, num_features])
 
     if save:
         filename = 'feature_importances-'+datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
-        fig_path = os.path.join(B2KSKS_FIGURES, filename)
+        fig_path = os.path.join(savepath_base, filename)
         figure_handler(save, fig_path)
     elif not save:
         figure_handler(save)
@@ -248,8 +259,8 @@ def train_kfold(clf_type, X, y, folds=6, show_plots=False, write_decisions=False
         clf.fit(X_train.as_matrix(), y_train)
 
         if show_plots:
-            plot_train_test_comparison(clf, X_train, y_train, X_test.as_matrix(), y_test.as_matrix(),
-                                       title='Classifier iteration {}'.format(i))
+            plot_classifier_output(clf, X_train, y_train, X_test.as_matrix(), y_test.as_matrix(),
+                                   title='Classifier iteration {}'.format(i))
 
         if write_decisions:
             X.set_value(test_index, decision_col_name, clf.decision_function(X_test))
