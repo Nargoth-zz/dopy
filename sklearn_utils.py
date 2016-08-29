@@ -61,7 +61,7 @@ def plot_roc_curve(clfs, Xs, ys, labels=None, save=False, scale_xy=[[0.0, 1.0],[
     if not isinstance(Xs, collections.MutableSequence):
         Xs = [Xs]
         
-    if not isinstance(clfs, collections.MutableSequence):
+    if not isinstance(ys, collections.MutableSequence):
         ys = [ys]
 
     # Calculate roc curves, roc_auc and plot it
@@ -259,7 +259,7 @@ def train_kfold(clf_type, X, y, folds=6, show_plots=False, write_decisions=False
         clf.fit(X_train.as_matrix(), y_train)
 
         if show_plots:
-            plot_classifier_output(clf, X_train, y_train, X_test.as_matrix(), y_test.as_matrix(),
+            plot_classifier_output(clf, X_train, y_train, X_test, y_test,
                                    title='Classifier iteration {}'.format(i))
 
         if write_decisions:
