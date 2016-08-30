@@ -272,7 +272,7 @@ def train_kfold(clf_type, X, y, folds=6, show_plots=False, write_decisions=False
 
     return clfs
 
-def plot_variable_correlations(data, save=False, savepath="", **kwds):
+def plot_correlations(data, save=False, savepath="", **kwds):
     """Calculate pairwise correlation between features.
 
     Extra arguments are passed on to DataFrame.corr()
