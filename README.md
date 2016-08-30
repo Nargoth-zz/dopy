@@ -38,6 +38,11 @@ sys.path.append('..')
 from sklearn_utils.sklearn_utils import plot_roc_curve
 ```
 
+### The package contains the following functions
+
+* `plot_roc_curve(clfs, Xs, ys, labels=None, save=False, scale_xy=[[0.0, 1.0],[0.0, 1.0]],
+                   savepath_base='')`
+
 
 
 
