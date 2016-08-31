@@ -206,18 +206,12 @@ def plot_bdt_vars(df, flags, sig_label='Signal MC (Sig)', bkg_label='Data Upper 
 
 
 def plot_feature_importances(clf, X, save=False, savepath_base=''):
-    # Number of features
-    num_features = len(X.columns)
-    # To sort for maximum feature importances
-    importances_sorted = sorted(zip(clf.feature_importances_, X.columns), reverse=True)
-    # Transpose list the python way (?!)
-    importances_sorted_inv = list(zip(*importances_sorted))
     plt.figure()
     plt.title("Feature importances")
-    plt.bar(range(num_features), importances_sorted_inv[0],
-                color="r", alpha=0.5, align="center")
-    plt.xticks(range(num_features), importances_sorted_inv[1], rotation=90)
-    plt.xlim([-1, num_features])
+
+    var_importance = pd.Series(clf.feature_importances_, X.columns)
+    var_importance.sort()
+    var_importance.plot(kind='barh', color='r', alpha=0.5)
 
     if save:
         filename = 'feature_importances-'+datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
