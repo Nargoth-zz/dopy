@@ -278,7 +278,7 @@ def plot_correlations(data, save=False, savepath="", **kwds):
     Extra arguments are passed on to DataFrame.corr()
     """
 
-    import seaborn as sns
+    import seaborn.apionly as sns
 
     plt.clf()
 
@@ -291,13 +291,16 @@ def plot_correlations(data, save=False, savepath="", **kwds):
 
     opts = {'cmap': 'YlGnBu_r', 'vmin': -1, 'vmax': 1}
 
-    ax = sns.heatmap(corrmat, **kwds)
-    ax.set_title('Correlations')
+    ax1 = sns.heatmap(corrmat, linewidths=.5, **opts)
+    ax1.set_title('Correlations')
 
-    ax.set_xticks(np.arange(len(labels))+1, minor=False)
-    ax.set_yticks(np.arange(len(labels))+1, minor=False)
-    ax.set_xticklabels(labels, minor=False, rotation=70, ha='right')
-    ax.set_yticklabels(labels, minor=False, rotation=0)
+    for ax in (ax1,):
+        ax.set_xticks(np.arange(len(labels))+.5, minor=False)
+        ax.set_yticks(np.arange(len(labels))+.5, minor=False)
+        ax.set_xticklabels(labels, minor=False, rotation=70, ha='right')
+        ax.set_yticklabels(labels, minor=False, rotation='horizontal')
+
+    plt.tight_layout()
     
     if save:
         filename = 'correlations-'+datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')+'.pdf'
