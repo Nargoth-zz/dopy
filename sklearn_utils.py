@@ -29,7 +29,10 @@ def figure_handler(save, fig_path=None):
     """
 
     if save:
-        plt.savefig(fig_path)
+        from matplotlib.backends.backend_pdf import PdfPages
+        pp = PdfPages(fig_path)
+        pp.savefig()
+        pp.close()
     elif not save:
         plt.show()
 
@@ -84,7 +87,7 @@ def plot_roc_curve(clfs, Xs, ys, labels=None, save=False, scale_xy=[[0.0, 1.0],[
             i += 1
 
     if save:
-        filename = 'roc_curve-'+datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+        filename = 'roc_curve-'+datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')+'.pdf'
         fig_path = os.path.join(savepath_base, filename)
         figure_handler(save, fig_path)
     elif not save:
@@ -144,9 +147,9 @@ def plot_classifier_output(clf, X_train, y_train, X_test=None, y_test=None, bins
 
     if save:
         if title != None:
-            filename = 'classifier_output-'+str(title)+'-'+datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+            filename = 'classifier_output-'+str(title)+'-'+datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')+'.pdf'
         else:
-            filename = 'classifier_output-'+'-'+datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+            filename = 'classifier_output-'+'-'+datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')+'.pdf'
         fig_path = os.path.join(savepath_base, filename)
         figure_handler(save, fig_path)
     elif not save:
@@ -198,7 +201,7 @@ def plot_bdt_vars(df, flags, sig_label='Signal MC (Sig)', bkg_label='Data Upper 
         plt.legend(loc='best')
 
     if save:
-        filename = 'bdt_vars-'+sig_name+'_vs_'+bkg_name+'-'+datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+        filename = 'bdt_vars-'+sig_name+'_vs_'+bkg_name+'-'+datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')+'.pdf'
         fig_path = os.path.join(savepath_base, filename)
         figure_handler(save, fig_path)
     elif not save:
@@ -214,7 +217,7 @@ def plot_feature_importances(clf, X, save=False, savepath_base=''):
     var_importance.plot(kind='barh', color='r', alpha=0.5)
 
     if save:
-        filename = 'feature_importances-'+datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+        filename = 'feature_importances-'+datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')+'.pdf'
         fig_path = os.path.join(savepath_base, filename)
         figure_handler(save, fig_path)
     elif not save:
@@ -274,3 +277,37 @@ def train_kfold(clf_type, X, y, folds=6, show_plots=False, write_decisions=False
         clfs.append(clf)
 
     return clfs
+
+def plot_correlations(data, save=False, savepath="", **kwds):
+    """Calculate pairwise correlation between features.
+
+    Extra arguments are passed on to DataFrame.corr()
+    """
+
+    import seaborn as sns
+
+    plt.clf()
+
+    # simply call df.corr() to get a table of
+    # correlation values if you do not need
+    # the fancy plotting
+    corrmat = data.corr()
+    labels = corrmat.columns.values
+    labels = [labels[i] for i in range(len(labels))]
+
+    opts = {'cmap': 'YlGnBu_r', 'vmin': -1, 'vmax': 1}
+
+    ax = sns.heatmap(corrmat, **kwds)
+    ax.set_title('Correlations')
+
+    ax.set_xticks(np.arange(len(labels))+1, minor=False)
+    ax.set_yticks(np.arange(len(labels))+1, minor=False)
+    ax.set_xticklabels(labels, minor=False, rotation=70, ha='right')
+    ax.set_yticklabels(labels, minor=False, rotation=0)
+    
+    if save:
+        filename = 'correlations-'+datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')+'.pdf'
+        fig_path = os.path.join(savepath_base, filename)
+        figure_handler(save, fig_path)
+    elif not save:
+        figure_handler(save)    
