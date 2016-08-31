@@ -3,6 +3,7 @@
 ### to produce plots and do calculations commonly used in HEP.
 ###
 ### Author: Timon Schmelzer (timon.schmelzer@tu-dortmund.de)
+### Co-Author: Moritz Demmer (moritz.demmer@tu-dortmund.de)
 ###
 ### Date (last update): 11.07.2016 (05.08.2016)
 ##############################
