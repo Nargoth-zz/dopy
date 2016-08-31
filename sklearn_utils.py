@@ -279,6 +279,15 @@ def train_kfold(clf_type, X, y, folds=6, show_plots=False, write_decisions=False
 
     return clfs
 
+def classify_unseen_data(clfs, data, features, decision_column):
+    decision_vector = np.zeros(len(data))
+    data_features = data[features]
+    for clf in clfs:
+        decision_vector += clf.decision_function(data[features])
+    decision_vector /= len(clfs)
+    data[decision_column] = decision_vector
+
+
 def plot_correlations(data, save=False, savepath="", **kwds):
     """Calculate pairwise correlation between features.
 
