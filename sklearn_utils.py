@@ -60,10 +60,10 @@ def plot_roc_curve(clfs, Xs, ys, labels=None, save=False, scale_xy=[[0.0, 1.0],[
 
     if not isinstance(labels, collections.MutableSequence):
         labels = [labels]
-        
+
     if not isinstance(Xs, collections.MutableSequence):
         Xs = [Xs]
-        
+
     if not isinstance(ys, collections.MutableSequence):
         ys = [ys]
 
@@ -159,8 +159,8 @@ def plot_classifier_output(clf, X_train, y_train, X_test=None, y_test=None, bins
 
 
 def plot_bdt_vars(df, flags, sig_label='Signal MC (Sig)', bkg_label='Data Upper SB (Bkg)',
-                  sig_name='SigMC', bkg_name='DataUpperSB', plot_appendix='', save=False, 
-                  savepath_base='', **kwargs):
+                  sig_name='SigMC', bkg_name='DataUpperSB', plot_appendix='', save=False,
+                  savepath_base='', bins=20, **kwargs):
     """Plots signal vs. background distributions.
 
     Keyword arguments:
@@ -184,19 +184,24 @@ def plot_bdt_vars(df, flags, sig_label='Signal MC (Sig)', bkg_label='Data Upper 
     for i, var in tqdm_notebook(enumerate(df.columns, start=1), total=len(df.columns)):
         plt.subplot(plots_in_y, plots_in_x, i)
 
+        # Calc min and max to determine binning
+        binning_min = np.min(df[var])
+        binning_max = np.max(df[var])
+
         import utils.statistics
-        y, bins = np.histogram(df[var][flags == 1], bins=100)
+        y, binning = np.histogram(df[var][flags == 1], range=(binning_min, binning_max),
+                                  **kwargs)
         errors = utils.statistics.poissonian_cls(y)
         y, errors = utils.statistics.normalize_histogram(y, errors)
 
         import utils.plotting
-        utils.plotting.plot_steps_with_errors(bins, y, errors, color = None, label = None, alpha = 0.25)
+        utils.plotting.plot_steps_with_errors(binning, y, errors, color = None, label = None, alpha = 0.25)
 
-        y, bins = np.histogram(df[var][flags == 0], bins=100)
+        y, binning = np.histogram(df[var][flags == 0], bins=binning, **kwargs)
         errors = utils.statistics.poissonian_cls(y)
         y, errors = utils.statistics.normalize_histogram(y, errors)
 
-        utils.plotting.plot_steps_with_errors(bins, y, errors, color = None, label = None, alpha = 0.25)
+        utils.plotting.plot_steps_with_errors(binning, y, errors, color = None, label = None, alpha = 0.25)
 
         plt.xlabel(var + plot_appendix)
         plt.legend(loc='best')
@@ -317,10 +322,10 @@ def plot_correlations(data, save=False, savepath="", **kwds):
         ax.set_yticklabels(labels, minor=False, rotation='horizontal')
 
     plt.tight_layout()
-    
+
     if save:
         filename = 'correlations-'+datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')+'.pdf'
         fig_path = os.path.join(savepath_base, filename)
         figure_handler(save, fig_path)
     elif not save:
-        figure_handler(save)    
+        figure_handler(save)
