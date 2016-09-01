@@ -190,7 +190,7 @@ def plot_bdt_vars(df, flags, sig_label='Signal MC (Sig)', bkg_label='Data Upper 
 
         import utils.statistics
         y, binning = np.histogram(df[var][flags == 1], range=(binning_min, binning_max),
-                                  **kwargs)
+                                  bins=bins, **kwargs)
         errors = utils.statistics.poissonian_cls(y)
         y, errors = utils.statistics.normalize_histogram(y, errors)
 
