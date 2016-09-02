@@ -31,6 +31,8 @@ class PlotComponent:
             else:
                 raise Exception("String like selection is already set - it is unclear how to combine {} with {} \
                     for plot {} component {}".format(selection, self.string_selection, self.mother_name, self.name))
+        else:
+            raise Exception("Unknown selection type")
 
 
     def apply_selection(self, print_efficiencies=False, print_single_cut_efficiencies=False):
@@ -83,17 +85,18 @@ class Plot:
 
     def prepare_selection(self, selection):
         for component_name, component in self.components.items():
+            selection_for_component = selection
             if type(selection) == type({}): # Ramon's selection style with dicts
-                if selection != {}:
+                if selection_for_component != {}:
                     if type(list(selection.values())[0]) == type({}): #Then we need to get the component first
                         if component.name in selection:
-                            selection = selection[component_identifier]
+                            selection_for_component = selection[component.name]
                         else:
-                            print("No selection for component {}".format(component_identifier))
+                            selection_for_component = {}
+                            print("WARNING: No selection for component {} but nested selection passed.".format(component.name))
                     else: #Apply same selection for all components
-                        print("Will apply same selection to all components")
-                        pass
-            component.prepare_selection(selection)
+                        print("INFO: Will apply same selection to all components")
+            component.prepare_selection(selection_for_component)
 
 
     def apply_selection(self, print_efficiencies=False, print_single_cut_efficiencies=False):
@@ -166,10 +169,15 @@ class Plot:
     def copy(self):
         plot_copy = Plot(self.title)
         import copy
-        plot_copy.components = copy.deepcopy(self.components)
-        plot_copy.observables = self.observables.copy()
-        plot_copy.x_min = self.x_min
-        plot_copy.x_max = self.x_max
+        
+        plot_copy.components              = copy.deepcopy(self.components)
+        plot_copy.observables             = self.observables.copy()
+        plot_copy.x_min                   = self.x_min
+        plot_copy.x_max                   = self.x_max
+        plot_copy.range_auto_update       = self.range_auto_update
+        plot_copy.range_part_of_selection = self.range_part_of_selection
+        plot_copy.is_selected             = self.is_selected
+
         return plot_copy
 
 
@@ -238,13 +246,13 @@ class Plotter:
         if plots == []:
             plots = list(self.plots.keys())
 
-        duplicate_plots = []
+        duplicated_plots = []
         for old_plot_name in plots:
             new_plot_name  = old_plot_name+ "_" + suffix_to_append
             duplicate_plot = self.duplicate_plot(old_plot_name, new_plot_name, selection)
             duplicated_plots.append(duplicate_plot)
 
-        return duplicate_plots
+        return duplicated_plots
 
 
     def prepare_selection_for_plot(self, plot_name, selection):
@@ -285,7 +293,10 @@ class Plotter:
     def plot(self, show_plots=True, verbose=False):
         """ Plot all plots
         """
-        for plot_name in self.plots:
+        sorted_names = list(self.plots.keys())
+        sorted_names.sort()
+
+        for plot_name in sorted_names:
             self.plots[plot_name].plot(verbose)
             if show_plots:
                 plt.show()
