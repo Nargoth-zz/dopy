@@ -9,6 +9,9 @@ class PlotComponent:
         self.name       = name
         self.data       = data
         self.observable = observable
+        self.x_min      = None    # Is this the way one does this?
+        self.x_max      = None
+        self.update_x_min_max()
 
     def apply_selection(self, selection, print_efficiencies=True, print_single_cut_efficiencies=True):
         if type(selection) == type({}): # Ramon's selection style with dicts
@@ -18,33 +21,39 @@ class PlotComponent:
                                                                          print_efficiencies=print_efficiencies,
                                                                          print_single_cut_efficiencies=print_single_cut_efficiencies)
         elif type(selection) == type(""):
-            print("WARNING: Using experimental string selection style")
-            print("WARNING: {}".format(selection))
+            print("WARNING: Using experimental string selection style for {}".format(selection))
             self.data = self.data.query(selection)
         else:
             print("ERROR: Unsupported selection type")
 
+        self.update_x_min_max()
+
+    def update_x_min_max(self):
+        self.x_min = self.data[self.observable].min()
+        self.x_max = self.data[self.observable].max()
+
+    def get_min(self): return self.x_min
+    def get_max(self): return self.x_max
+
+
+
 class Plot:
     def __init__(self, title):
-        self.components  = {}
-        self.title       = title
-        self.observables = []
-        self.x_min       = None
-        self.x_max       = None
+        self.components        = {}
+        self.title             = title
+        self.observables       = []
+        self.x_min             = None
+        self.x_max             = None
+        self.range_auto_update = True
 
     def add_component(self, data, observable, component_name=""):
         if component_name=="":
             component_name = str(len(self.components))
         self.components[component_name] = PlotComponent(component_name, data, observable)
         self.observables.append(observable)
-        x_min = data[observable].min()
-        x_max = data[observable].max()
-        if (not self.x_min) or (x_min < self.x_min):
-            self.x_min = x_min
-        if (not self.x_max) or (x_max > self.x_max):
-            self.x_max = x_max
 
-    def apply_selection(self, selection, print_efficiencies=True, print_single_cut_efficiencies=True):
+
+    def apply_selection(self, selection, print_efficiencies=False, print_single_cut_efficiencies=False):
         for component_name, component in self.components.items():
 
             if print_efficiencies or print_single_cut_efficiencies:
@@ -64,6 +73,14 @@ class Plot:
                 
             component.apply_selection(selection)
 
+    def set_range(self, min, max):
+        for component_name, component in self.components.items():
+          component.apply_selection({component.observable : [min, max]}, print_efficiencies=False, print_single_cut_efficiencies=False)
+
+        self.range_auto_update = False
+        print("Warning: you updated the range of {} by hand - won't change it.".format(self.title))
+
+
     def print_components(self):
         print("Plot: {}".format(self.title))
         print("{:<10} {:<10} {:<10}".format("component", "rows", "columns"))
@@ -71,7 +88,17 @@ class Plot:
             print("{:<10} {:<10} {:<10}".format(component.name, len(component.data),
                                                 len(component.data.columns)))
 
-    def plot(self):
+
+    def plot(self, adjust_range_automatism=True):
+        for component_name, component in self.components.items():
+            if adjust_range_automatism:
+                x_min = component.get_min()
+                x_max = component.get_max()
+                if (not self.x_min) or (x_min < self.x_min):
+                    self.x_min = x_min
+                if (not self.x_max) or (x_max > self.x_max):
+                    self.x_max = x_max
+
         for component_name, component in self.components.items():
             y, bins = np.histogram(component.data[component.observable].values, bins=100, range=(self.x_min,self.x_max))
             errors = utils.statistics.poissonian_cls(y)
@@ -85,6 +112,7 @@ class Plot:
 
         fig.set_size_inches(8,6)
 
+
     def copy(self):
         plot_copy = Plot(self.title)
         import copy
@@ -94,9 +122,16 @@ class Plot:
         plot_copy.x_max = self.x_max
         return plot_copy
 
+
+
 class Plotter:
     def __init__(self):
         self.plots = {}
+
+
+    def __getitem__(self, plot_name):
+        return self.plots[plot_name]
+
 
     def create_plot(self, plot_name, datasets, observable, component_labels=[]):
         """ Creates single plot of an observables in multiple datasets
@@ -119,14 +154,20 @@ class Plotter:
         self.plots[plot_name] = plot
         return plot
 
+
     def create_plots(self, datasets, observables, plot_names=[], component_labels=[]):
         """ Creates multiple plots of the same observables in multiple datasets
         """
         if not plot_names:
             plot_names = observables
 
+        created_plots = []
         for plot_name, observable in zip(plot_names, observables):
-            self.create_plot(plot_name, datasets, observable, component_labels)
+            plot = self.create_plot(plot_name, datasets, observable, component_labels)
+            created_plots.append(plot)
+
+        return created_plots
+
 
     def duplicate_plot(self, old_plot_name, new_plot_name, selection=None):
         """ Duplicates plot and applies a selection to the copy
@@ -136,8 +177,10 @@ class Plotter:
             self.plots[new_plot_name].title = new_plot_name
             if selection:
                 self.apply_selection_to_plot(new_plot_name, selection)
+            return self.plots[new_plot_name]
         else:
             print("ERROR: couldn't duplicate because {} was not found.".format(old_plot_name))
+
 
     def duplicate_plots(self, suffix_to_append="copy", plots=[], selection=None):
         """ Duplicates multiple plots and applies a selection to the copy
@@ -145,9 +188,14 @@ class Plotter:
         if plots == []:
             plots = list(self.plots.keys())
 
+        duplicate_plots = []
         for old_plot_name in plots:
-            new_plot_name = old_plot_name+ "_" + suffix_to_append
-            self.duplicate_plot(old_plot_name, new_plot_name, selection)
+            new_plot_name  = old_plot_name+ "_" + suffix_to_append
+            duplicate_plot = self.duplicate_plot(old_plot_name, new_plot_name, selection)
+            duplicated_plots.append(duplicate_plot)
+
+        return duplicate_plots
+
 
     def apply_selection_to_plot(self, plot_name, selection):
         """ Applies selection to a single plot
@@ -157,17 +205,28 @@ class Plotter:
         else:
             print("Plotter::apply_selection_to_plot couldn't apply selection plot {} not found".format(plot_name))
 
+        return self.plots[plot_name]
+
+
     def apply_selection_to_plots(self, selection):
         """ Applies selection to all plots
         """
         for plot_name in self.plots:
             self.plots[plot_name].apply_selection(selection)
 
+
     def print_plots(self):
         """ Printout of plots with their components
         """
         for plot_name in self.plots:
             plot.print_components()
+
+
+    def get_plots(self):
+        """ Returns all plots that are currently prepared
+        """
+        return plots
+
 
     def plot(self, show_plots=True):
         """ Plot all plots
