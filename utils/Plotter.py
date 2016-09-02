@@ -5,32 +5,55 @@ import utils.statistics
 import utils.selection
 
 class PlotComponent:
-    def __init__(self, name, data, observable):
-        self.name       = name
-        self.data       = data
-        self.observable = observable
-        self.x_min      = None    # Is this the way one does this?
-        self.x_max      = None
+    def __init__(self, name, data, observable, mothername="None"):
+        self.mother_name      = mothername
+        self.name             = name
+        self.data             = data
+        self.observable       = observable
+        self.initial_size     = len(self.data)
+
+        self.x_min            = None    # Is this the way one does this?
+        self.x_max            = None
         self.update_x_min_max()
 
-    def apply_selection(self, selection, print_efficiencies=True, print_single_cut_efficiencies=True):
-        if type(selection) == type({}): # Ramon's selection style with dicts
-            if selection != {}:
-                selectionorder=list(selection.keys())
-                self.data = utils.selection.apply_selection_to_dataframe(self.data, selection, selectionorder,
-                                                                         print_efficiencies=print_efficiencies,
-                                                                         print_single_cut_efficiencies=print_single_cut_efficiencies)
+        self.dict_selection   = {}
+        self.string_selection = ""
+
+
+    def prepare_selection(self, selection):
+        if type(selection) == type({}):
+            self.dict_selection.update(selection)
+            return self.dict_selection
         elif type(selection) == type(""):
-            print("WARNING: Using experimental string selection style for {}".format(selection))
-            self.data = self.data.query(selection)
-        else:
-            print("ERROR: Unsupported selection type")
+            if self.string_selection == "":
+                self.string_selection = selection
+                return self.string_selection
+            else:
+                raise Exception("String like selection is already set - it is unclear how to combine {} with {} \
+                    for plot {} component {}".format(selection, self.string_selection, self.mother_name, self.name))
+
+
+    def apply_selection(self, print_efficiencies=False, print_single_cut_efficiencies=False):
+        
+        if self.dict_selection != {}:
+            selectionorder = list(self.dict_selection.keys())
+            self.data = utils.selection.apply_selection_to_dataframe(self.data, self.dict_selection, selectionorder,
+                                                                     print_efficiencies=print_efficiencies,
+                                                                     print_single_cut_efficiencies=print_single_cut_efficiencies)
+        if self.string_selection != "":
+            print("WARNING: Using experimental string selection style for {}".format(self.string_selection))
+            self.data = self.data.query(self.string_selection)
+
+        if print_efficiencies or print_single_cut_efficiencies:
+            print("\n")
 
         self.update_x_min_max()
+
 
     def update_x_min_max(self):
         self.x_min = self.data[self.observable].min()
         self.x_max = self.data[self.observable].max()
+
 
     def get_min(self): return self.x_min
     def get_max(self): return self.x_max
@@ -44,22 +67,22 @@ class Plot:
         self.observables       = []
         self.x_min             = None
         self.x_max             = None
-        self.range_auto_update = True
+
+        self.range_auto_update       = True
+        self.range_part_of_selection = False
+
+        self.is_selected       = False
+
 
     def add_component(self, data, observable, component_name=""):
         if component_name=="":
             component_name = str(len(self.components))
-        self.components[component_name] = PlotComponent(component_name, data, observable)
+        self.components[component_name] = PlotComponent(component_name, data, observable, mothername=self.title)
         self.observables.append(observable)
 
 
-    def apply_selection(self, selection, print_efficiencies=False, print_single_cut_efficiencies=False):
+    def prepare_selection(self, selection):
         for component_name, component in self.components.items():
-
-            if print_efficiencies or print_single_cut_efficiencies:
-                print("Plot: {:<15}  Dataset: {:<15}".format(self.title, component.name))
-                print("-----------------------------------------------------------------")
-
             if type(selection) == type({}): # Ramon's selection style with dicts
                 if selection != {}:
                     if type(list(selection.values())[0]) == type({}): #Then we need to get the component first
@@ -70,15 +93,36 @@ class Plot:
                     else: #Apply same selection for all components
                         print("Will apply same selection to all components")
                         pass
-                
-            component.apply_selection(selection)
+            component.prepare_selection(selection)
 
-    def set_range(self, min, max):
+
+    def apply_selection(self, print_efficiencies=False, print_single_cut_efficiencies=False):
+        if not self.range_auto_update and not self.range_part_of_selection:
+            print("WARNING: Range for plot {} has been manually set.".format(self.title))
+            print("WARNING: Efficiencies are calculated against the full complete dataset.")
         for component_name, component in self.components.items():
-          component.apply_selection({component.observable : [min, max]}, print_efficiencies=False, print_single_cut_efficiencies=False)
+            if print_efficiencies or print_single_cut_efficiencies:
+                if(self.is_selected):
+                    print("WARNING {} {} has been selected before. Efficiencies are not normalized to the total data".format(self.title,
+                                                                                                                             component_name))
+                print("Appplying selections for Plot: {:<15}  Dataset: {:<15}".format(self.title, component.name))
+                print("-----------------------------------------------------------------")                
+            component.apply_selection(print_efficiencies, print_single_cut_efficiencies)
+        self.is_selected = True
+
+
+    def set_range(self, min, max, add_to_selection=False):
+        if add_to_selection:
+            for component_name, component in self.components.items():
+                component.prepare_selection({component.observable : [min, max]})
 
         self.range_auto_update = False
-        print("Warning: you updated the range of {} by hand - won't change it.".format(self.title))
+        self.x_min = min
+        self.x_max = max
+
+        self.range_part_of_selection = add_to_selection
+        print("WARNING: you updated the range of {} by hand - won't change it.".format(self.title))
+
 
 
     def print_components(self):
@@ -89,9 +133,15 @@ class Plot:
                                                 len(component.data.columns)))
 
 
-    def plot(self, adjust_range_automatism=True):
+    def plot(self, verbose=False):
+        if verbose:
+            self.apply_selection(print_efficiencies=True,
+                                 print_single_cut_efficiencies=True)
+        else:
+            self.apply_selection()
+
         for component_name, component in self.components.items():
-            if adjust_range_automatism:
+            if self.range_auto_update:
                 x_min = component.get_min()
                 x_max = component.get_max()
                 if (not self.x_min) or (x_min < self.x_min):
@@ -197,22 +247,26 @@ class Plotter:
         return duplicate_plots
 
 
-    def apply_selection_to_plot(self, plot_name, selection):
+    def prepare_selection_for_plot(self, plot_name, selection):
         """ Applies selection to a single plot
         """
         if plot_name in self.plots:
-            self.plots[plot_name].apply_selection(selection)
+            self.plots[plot_name].prepare_selection(selection)
         else:
-            print("Plotter::apply_selection_to_plot couldn't apply selection plot {} not found".format(plot_name))
+            print("Plotter::prepare_selection_for_plot couldn't apply selection plot {} not found".format(plot_name))
 
         return self.plots[plot_name]
+
+
+    def set_range_for_plot(self, plot_name, min, max, add_to_selection=False):
+        self.plots[plot_name].set_range(min, max, add_to_selection)
 
 
     def apply_selection_to_plots(self, selection):
         """ Applies selection to all plots
         """
         for plot_name in self.plots:
-            self.plots[plot_name].apply_selection(selection)
+            self.plots[plot_name].apply_selection()
 
 
     def print_plots(self):
@@ -228,10 +282,10 @@ class Plotter:
         return plots
 
 
-    def plot(self, show_plots=True):
+    def plot(self, show_plots=True, verbose=False):
         """ Plot all plots
         """
         for plot_name in self.plots:
-            self.plots[plot_name].plot()
+            self.plots[plot_name].plot(verbose)
             if show_plots:
                 plt.show()
