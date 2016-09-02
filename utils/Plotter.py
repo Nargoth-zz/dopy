@@ -24,7 +24,7 @@ class PlotComponent:
         else:
             print("ERROR: Unsupported selection type")
 
-class Plot:       
+class Plot:
     def __init__(self, title):
         self.components  = {}
         self.title       = title
@@ -94,32 +94,39 @@ class Plot:
         plot_copy.x_max = self.x_max
         return plot_copy
 
-
 class Plotter:
     def __init__(self):
         self.plots = {}
 
-    def create_plot(self, plot_name, datasets, observable):
+    def create_plot(self, plot_name, datasets, observable, component_labels=[]):
         """ Creates single plot of an observables in multiple datasets
         """
-        plot = Plot(plot_name)
         if not type(datasets)==type([]):
             datasets = [datasets]
+        
+        if component_labels and len(component_labels) != len(datasets):
+            raise Exception('length of component_labels does not match number of components')
 
-        for dataset in datasets:
-            plot.add_component(dataset, observable)
+        plot = Plot(plot_name)
+        
+        if component_labels:
+            for dataset, component_label in zip(datasets, component_labels):
+                plot.add_component(dataset, observable, component_label)
+        else:
+            for dataset in datasets:
+                plot.add_component(dataset, observable)
 
         self.plots[plot_name] = plot
         return plot
 
-    def create_plots(self, datasets, observables, plot_names=[]):
+    def create_plots(self, datasets, observables, plot_names=[], component_labels=[]):
         """ Creates multiple plots of the same observables in multiple datasets
         """
         if not plot_names:
             plot_names = observables
 
         for plot_name, observable in zip(plot_names, observables):
-            self.create_plot(plot_name, datasets, observable)
+            self.create_plot(plot_name, datasets, observable, component_labels)
 
     def duplicate_plot(self, old_plot_name, new_plot_name, selection=None):
         """ Duplicates plot and applies a selection to the copy
@@ -129,7 +136,18 @@ class Plotter:
             self.plots[new_plot_name].title = new_plot_name
             if selection:
                 self.apply_selection_to_plot(new_plot_name, selection)
+        else:
+            print("ERROR: couldn't duplicate because {} was not found.".format(old_plot_name))
 
+    def duplicate_plots(self, suffix_to_append="copy", plots=[], selection=None):
+        """ Duplicates multiple plots and applies a selection to the copy
+        """
+        if plots == []:
+            plots = list(self.plots.keys())
+
+        for old_plot_name in plots:
+            new_plot_name = old_plot_name+ "_" + suffix_to_append
+            self.duplicate_plot(old_plot_name, new_plot_name, selection)
 
     def apply_selection_to_plot(self, plot_name, selection):
         """ Applies selection to a single plot
@@ -151,9 +169,10 @@ class Plotter:
         for plot_name in self.plots:
             plot.print_components()
 
-    def plot(self):
+    def plot(self, show_plots=True):
         """ Plot all plots
         """
         for plot_name in self.plots:
             self.plots[plot_name].plot()
-            plt.show()
+            if show_plots:
+                plt.show()
