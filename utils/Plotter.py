@@ -1,8 +1,10 @@
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn_utils.utils.plotting import plot_steps_with_errors
 import utils.statistics
 import utils.selection
+from matplotlib.backends.backend_pdf import PdfPages
 
 class PlotComponent:
     def __init__(self, name, data, observable, mothername="None"):
@@ -29,8 +31,8 @@ class PlotComponent:
                 self.string_selection = selection
                 return self.string_selection
             else:
-                raise Exception("String like selection is already set - it is unclear how to combine {} with {} \
-                    for plot {} component {}".format(selection, self.string_selection, self.mother_name, self.name))
+                raise Exception("""String like selection is already set - it is unclear how to combine
+                                {} with {} for plot {} component {}""".format(selection, self.string_selection, self.mother_name, self.name))
         else:
             raise Exception("Unknown selection type")
 
@@ -74,6 +76,7 @@ class Plot:
         self.range_part_of_selection = False
 
         self.is_selected       = False
+        self.selection_changed = False
 
 
     def add_component(self, data, observable, component_name=""):
@@ -97,6 +100,11 @@ class Plot:
                     else: #Apply same selection for all components
                         print("INFO: Will apply same selection to all components")
             component.prepare_selection(selection_for_component)
+        # Remember if this plot was selected before and the selection was changed after that
+        if self.is_selected:
+            print("WARNING: preparing the selection for {} which has already been selected.".format(self.title))
+            self.selection_changed = True
+
 
 
     def apply_selection(self, print_efficiencies=False, print_single_cut_efficiencies=False):
@@ -137,11 +145,14 @@ class Plot:
 
 
     def plot(self, verbose=False):
-        if verbose:
-            self.apply_selection(print_efficiencies=True,
-                                 print_single_cut_efficiencies=True)
-        else:
-            self.apply_selection()
+        if self.selection_changed or not self.is_selected:
+            if verbose:
+                self.apply_selection(print_efficiencies=True,
+                                     print_single_cut_efficiencies=True)
+            else:
+                self.apply_selection()
+        elif verbose:
+            print("WARNING: Plot {} already has selection applied - won't apply again.".format(self.title))
 
         for component_name, component in self.components.items():
             if self.range_auto_update:
@@ -183,8 +194,18 @@ class Plot:
 
 
 class Plotter:
-    def __init__(self):
-        self.plots = {}
+    def __init__(self, savepath=None):
+        self.plots    = {}
+        self.savepath = savepath
+
+        if savepath:
+            if not os.path.exists(savepath):
+                os.makedirs(savepath)
+            all_plots_file = os.path.join(savepath, "AllPlots.pdf")
+            self.pdfpages_file = PdfPages(all_plots_file)
+        else:
+            self.pdfpages_file = None
+
 
 
     def __getitem__(self, plot_name):
@@ -298,5 +319,11 @@ class Plotter:
 
         for plot_name in sorted_names:
             self.plots[plot_name].plot(verbose)
+            if self.savepath:
+                plt.savefig(self.pdfpages_file, format='pdf')
+                plt.savefig(os.path.join(self.savepath,plot_name+'.pdf'), format='pdf')
             if show_plots:
                 plt.show()
+
+    def finalize(self):
+        self.pdfpages_file.close()
