@@ -47,6 +47,8 @@ class PlotComponent:
                                                                      print_single_cut_efficiencies=print_single_cut_efficiencies)
         if self.string_selection != "":
             print("WARNING: Using experimental string selection style for {}".format(self.string_selection))
+            if(print_efficiencies or print_single_cut_efficiencies):
+                print("WARNING: Efficiencies for experimental string selection style are not implemented yet.")
             self.data = self.data.query(self.string_selection)
 
         if print_efficiencies or print_single_cut_efficiencies:
@@ -110,15 +112,16 @@ class Plot:
 
     def apply_selection(self, print_efficiencies=False, print_single_cut_efficiencies=False):
         if not self.range_auto_update and not self.range_part_of_selection:
-            print("WARNING: Range for plot {} has been manually set.".format(self.title))
+            print("WARNING: Range for plot {} has been manually set with range_part_of_selection=False.".format(self.title))
             print("WARNING: Efficiencies are calculated against the full complete dataset.")
         for component_name, component in self.components.items():
             if print_efficiencies or print_single_cut_efficiencies:
-                if(self.is_selected):
-                    print("WARNING {} {} has been selected before. Efficiencies are not normalized to the total data".format(self.title,
+                if component.dict_selection or component.string_selection:
+                    if(self.is_selected):
+                        print("WARNING {} {} has been selected before. Efficiencies are not normalized to the total data".format(self.title,
                                                                                                                              component_name))
-                print("Appplying selections for Plot: {:<15}  Dataset: {:<15}".format(self.title, component.name))
-                print("-----------------------------------------------------------------")                
+                    print("Selections for Plot: {:<15}  Component: {:<15}".format(self.title, component.name))
+                    print("-----------------------------------------------------------------")                
             component.apply_selection(print_efficiencies, print_single_cut_efficiencies)
         self.is_selected = True
 
@@ -162,8 +165,6 @@ class Plot:
                     self.x_min = x_min
                 if (not self.x_max) or (x_max > self.x_max):
                     self.x_max = x_max
-        else:
-            print("WARNING: you updated the range of {} by hand - won't change it.".format(self.title))
 
         for component_name, component in self.components.items():
             y, bins = np.histogram(component.data[component.observable].values, bins=100, range=(self.x_min,self.x_max))
