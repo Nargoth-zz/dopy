@@ -5,6 +5,7 @@ from sklearn_utils.utils.plotting import plot_steps_with_errors
 import utils.statistics
 import utils.selection
 from matplotlib.backends.backend_pdf import PdfPages
+import collections
 
 class PlotComponent:
     def __init__(self, name, data, observable, mothername="None"):
@@ -18,7 +19,7 @@ class PlotComponent:
         self.x_max            = None
         self.update_x_min_max()
 
-        self.dict_selection   = {}
+        self.dict_selection   = collections.OrderedDict()
         self.string_selection = ""
 
 
@@ -66,7 +67,7 @@ class PlotComponent:
 
 class Plot:
     def __init__(self, title):
-        self.components        = {}
+        self.components        = collections.OrderedDict()
         self.title             = title
         self.observables       = []
         self.x_min             = None
@@ -132,7 +133,6 @@ class Plot:
         self.x_max = max
 
         self.range_part_of_selection = add_to_selection
-        print("WARNING: you updated the range of {} by hand - won't change it.".format(self.title))
 
 
 
@@ -153,15 +153,17 @@ class Plot:
                 self.apply_selection()
         elif verbose:
             print("WARNING: Plot {} already has selection applied - won't apply again.".format(self.title))
-
-        for component_name, component in self.components.items():
-            if self.range_auto_update:
+        
+        if self.range_auto_update:
+            for component_name, component in self.components.items():
                 x_min = component.get_min()
                 x_max = component.get_max()
                 if (not self.x_min) or (x_min < self.x_min):
                     self.x_min = x_min
                 if (not self.x_max) or (x_max > self.x_max):
                     self.x_max = x_max
+        else:
+            print("WARNING: you updated the range of {} by hand - won't change it.".format(self.title))
 
         for component_name, component in self.components.items():
             y, bins = np.histogram(component.data[component.observable].values, bins=100, range=(self.x_min,self.x_max))
@@ -195,9 +197,10 @@ class Plot:
 
 class Plotter:
     def __init__(self, savepath=None):
-        self.plots    = {}
+        self.plots    = collections.OrderedDict()
         self.savepath = savepath
 
+        self.is_finalized = False
         if savepath:
             if not os.path.exists(savepath):
                 os.makedirs(savepath)
@@ -205,7 +208,6 @@ class Plotter:
             self.pdfpages_file = PdfPages(all_plots_file)
         else:
             self.pdfpages_file = None
-
 
 
     def __getitem__(self, plot_name):
@@ -219,7 +221,7 @@ class Plotter:
             datasets = [datasets]
         
         if component_labels and len(component_labels) != len(datasets):
-            raise Exception('length of component_labels does not match number of components')
+            raise Exception('length of component_labels does not match number of components for {}'.format(plot_name))
 
         plot = Plot(plot_name)
         
@@ -314,16 +316,24 @@ class Plotter:
     def plot(self, show_plots=True, verbose=False):
         """ Plot all plots
         """
-        sorted_names = list(self.plots.keys())
-        sorted_names.sort()
+        if self.is_finalized:
+            raise Exception("Plotter already finalized!")
 
-        for plot_name in sorted_names:
-            self.plots[plot_name].plot(verbose)
+        for plot_name,plot in self.plots.items():
+            plot.plot(verbose)
             if self.savepath:
                 plt.savefig(self.pdfpages_file, format='pdf')
                 plt.savefig(os.path.join(self.savepath,plot_name+'.pdf'), format='pdf')
             if show_plots:
                 plt.show()
 
+    def clear_plots(self):
+        """ Clears the current cache of plots but keeps other settings
+        """
+        self.plots = collections.OrderedDict()
+
     def finalize(self):
+        """ Finalizes the plotter usage and closes the PdfPages file
+        """
         self.pdfpages_file.close()
+        self.is_finalized = True
