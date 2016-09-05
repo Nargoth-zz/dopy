@@ -2,8 +2,8 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn_utils.utils.plotting import plot_steps_with_errors
-import sklearn_utils.utils.statistics
-import sklearn_utils.utils.selection
+import utils.statistics
+import utils.selection
 from matplotlib.backends.backend_pdf import PdfPages
 import collections
 
