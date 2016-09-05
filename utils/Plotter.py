@@ -3,11 +3,10 @@ import os
 import copy
 import numpy as np
 import matplotlib.pyplot as plt
-
+from matplotlib.backends.backend_pdf import PdfPages
 import sklearn_utils.utils.statistics
 import sklearn_utils.utils.selection
 from sklearn_utils.utils.plotting import plot_steps_with_errors
-from matplotlib.backends.backend_pdf import PdfPages
 
 class PlotComponent:
     def __init__(self, name, data, observable, mothername="None"):
