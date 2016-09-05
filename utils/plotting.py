@@ -91,8 +91,8 @@ def plot_steps_with_errors(binning, y_bins, errors, color = None, label = None, 
                        color=barplot[0].get_color())
 
 
-import utils.statistics
-import utils.selection
+import sklearn_utils.utils.statistics
+import sklearn_utils.utils.selection
 
 def plot_with_selection(plotname, component_to_observable, selection, component_order, selectionorder,
                         component_infos, print_efficiencies=False, print_single_cut_efficiencies=False):

@@ -6,7 +6,8 @@ import scipy.special
 def normalize_histogram(values, errors = None):
   integral = np.sum(values)
   values   = np.array(values, dtype='float') / integral
-  if not errors == None:
+  #if errors.all():
+  if errors.any():
     errors   = errors / integral
   return values, errors
 
