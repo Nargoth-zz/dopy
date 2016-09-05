@@ -1,3 +1,5 @@
+from more_itertools import unique_everseen
+
 def apply_cut_to_dataframe(dataframe, dep, cutrange, ignore_missing_columns=False):
   fr_cut = dataframe
   formatstring = "{:<40} {:<5.4}"
@@ -22,8 +24,6 @@ def apply_selection_to_dataframe(dataframe, selection, selectionorder=[], print_
   if selection=={}:
     print("WARNING no selection given - returning original dataframe")
     return dataframe
-
-  from more_itertools import unique_everseen
 
   if print_single_cut_efficiencies:
     formatstring = "{:<50} {:<10} {:<10} {:<10}"
