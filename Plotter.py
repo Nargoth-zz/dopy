@@ -4,9 +4,11 @@ import copy
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
-import sklearn_utils.utils.statistics
-import sklearn_utils.utils.selection
-from sklearn_utils.utils.plotting import plot_steps_with_errors
+
+# from the utils package
+from . import statistics
+from . import selection
+from . import plotting
 
 class PlotComponent:
     def __init__(self, name, data, observable, mothername="None"):
@@ -43,7 +45,7 @@ class PlotComponent:
         
         if self.dict_selection != {}:
             selectionorder = list(self.dict_selection.keys())
-            self.data = sklearn_utils.utils.selection.apply_selection_to_dataframe(self.data, self.dict_selection, selectionorder,
+            self.data = selection.apply_selection_to_dataframe(self.data, self.dict_selection, selectionorder,
                                                                      print_efficiencies=print_efficiencies,
                                                                      print_single_cut_efficiencies=print_single_cut_efficiencies)
         if self.string_selection != "":
@@ -169,9 +171,9 @@ class Plot:
 
         for component_name, component in self.components.items():
             y, bins = np.histogram(component.data[component.observable].values, bins=100, range=(self.x_min,self.x_max))
-            errors = sklearn_utils.utils.statistics.poissonian_cls(y)
-            y, errors = sklearn_utils.utils.statistics.normalize_histogram(y, errors)
-            plot_steps_with_errors(bins, y, errors, label=component.name, alpha=0.1)
+            errors = statistics.poissonian_cls(y)
+            y, errors = statistics.normalize_histogram(y, errors)
+            plotting.plot_steps_with_errors(bins, y, errors, label=component.name, alpha=0.1)
 
         plt.legend(loc='best')
         fig = plt.gcf()

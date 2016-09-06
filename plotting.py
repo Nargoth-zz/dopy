@@ -3,8 +3,8 @@ import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as plt
 
-import sklearn_utils.utils.statistics
-import sklearn_utils.utils.selection
+from . import statistics
+from . import selection
 
 def fill_between_steps(ax, x, y1, y2=0, step_where='pre', **kwargs):
     ''' fill between a step plot and
@@ -123,7 +123,7 @@ def plot_with_selection(plotname, component_to_observable, selection, component_
             print("No selection for component {}".format(component_identifier))
         else: #Apply same selection for all components
           sel = selection
-        fr_cut = sklearn_utils.utils.selection.apply_selection_to_dataframe(fr, sel, selectionorder, print_efficiencies=print_efficiencies,
+        fr_cut = selection.apply_selection_to_dataframe(fr, sel, selectionorder, print_efficiencies=print_efficiencies,
                                                               print_single_cut_efficiencies=print_single_cut_efficiencies)
       cur_min = fr_cut[plotvar].min()
       cur_max = fr_cut[plotvar].max()
@@ -140,8 +140,8 @@ def plot_with_selection(plotname, component_to_observable, selection, component_
     if component_identifier in component_to_observable:
       if component_identifier in cutframes:
         y, bins = np.histogram(cutframes[component_identifier][plotvar].values, bins=100, range=(global_min,global_max))
-        errors = sklearn_utils.utils.statistics.poissonian_cls(y)
-        y, errors = sklearn_utils.utils.statistics.normalize_histogram(y, errors)
+        errors = statistics.poissonian_cls(y)
+        y, errors = statistics.normalize_histogram(y, errors)
         plot_steps_with_errors(bins, y, errors, label=component_identifier, alpha=0.1)
         #plt.tight_layout()
       else:
