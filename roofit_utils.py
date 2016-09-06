@@ -42,9 +42,13 @@ def read_roodataset_from_tree(tchain, data_tot, observables, print_status=False)
       data_tot.add(observables)
 
 def build_tchain_from_files(filelist, treename, cutstring):
+  if not isinstance(filelist, list):
+      filelist = [filelist]
+
   from ROOT import TChain
   tchain = None
   tchain_init = TChain()
+
   for file in filelist:
     tchain_init.Add(file + '/' + treename)
   tchain = tchain_init
