@@ -422,6 +422,7 @@ class Plotter:
 
         if selection:
             plot.prepare_selection(selection)
+
         self.plots[plot_name] = plot
         return plot
 
@@ -444,7 +445,7 @@ class Plotter:
 
         created_plots = []
         for plot_name, observable in zip(plot_names, observables):
-            plot = self.create_plot(plot_name, datasets, observable, component_labels)
+            plot = self.create_plot(plot_name, datasets, observable, component_labels, selection=selection)
             created_plots.append(plot)
 
         return created_plots
