@@ -1,3 +1,4 @@
+import numpy as np
 from more_itertools import unique_everseen
 
 def add_log_to_dataframe(dataframe, log_transform_var, prefix="log_"):
