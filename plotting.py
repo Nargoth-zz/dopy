@@ -358,7 +358,7 @@ class Plot:
             y, bins = np.histogram(component.data[component.observable].values, bins=100, range=(self.x_min,self.x_max))
             errors = statistics.poissonian_cls(y)
             y, errors = statistics.normalize_histogram(y, errors)
-            plotting.plot_steps_with_errors(bins, y, errors, label=component.name, alpha=0.1)
+            plot_steps_with_errors(bins, y, errors, label=component.name, alpha=0.1)
 
         plt.legend(loc='best')
         fig = plt.gcf()
