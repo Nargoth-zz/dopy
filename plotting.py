@@ -429,7 +429,7 @@ class Plotter:
         """
         if not plot_names:
             plot_names = observables
-        elif len(plot_names) != len(datasets):
+        elif len(plot_names) != len(observables):
             raise Exception("number of datasets doesn't match length of number of plot names")
 
         created_plots = []
