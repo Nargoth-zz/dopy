@@ -402,7 +402,7 @@ class Plotter:
         return self.plots[plot_name]
 
 
-    def create_plot(self, plot_name, datasets, observable, component_labels=[]):
+    def create_plot(self, plot_name, datasets, observable, component_labels=[], selection=None):
         """ Creates single plot of an observables in multiple datasets
         """
         if not type(datasets)==type([]):
@@ -420,17 +420,27 @@ class Plotter:
             for dataset in datasets:
                 plot.add_component(dataset, observable)
 
+        if selection:
+            plot.prepare_selection(selection)
         self.plots[plot_name] = plot
         return plot
 
 
-    def create_plots(self, datasets, observables, plot_names=[], component_labels=[]):
+    def create_plots(self, datasets, observables, plot_names=[], component_labels=[], selection=None):
         """ Creates multiple plots of the same observables in multiple datasets
         """
+        if not isinstance(datasets, list):
+            datasets = [datasets]
+        if not isinstance(observables, list):
+            observables = [observables]
+        if not isinstance(plot_names, list):
+            plot_names = [plot_names]
+
         if not plot_names:
             plot_names = observables
+
         elif len(plot_names) != len(observables):
-            raise Exception("number of datasets doesn't match length of number of plot names")
+            raise Exception("number of datasets doesn't match number of observables")
 
         created_plots = []
         for plot_name, observable in zip(plot_names, observables):

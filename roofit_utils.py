@@ -1,4 +1,4 @@
-from . import timing
+from .timing import timing
 
 @timing
 def read_roodataset_from_tree(tchain, data_tot, observables, print_status=False):
