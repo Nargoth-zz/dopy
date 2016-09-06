@@ -1,5 +1,18 @@
 from more_itertools import unique_everseen
 
+def add_log_to_dataframe(dataframe, log_transform_var, prefix="log_"):
+    dataframe["log_" + log_transform_var] = np.log(dataframe[log_transform_var])
+
+def add_max_to_dataframe(dataframe, max_transform_var, dep1, dep2):
+    column1 = dataframe[dep1]
+    column2 = dataframe[dep2]
+    dataframe[max_transform_var] = np.maximum(column1, column2)
+
+def add_min_to_dataframe(dataframe, max_transform_var, dep1, dep2):
+    column1 = dataframe[dep1]
+    column2 = dataframe[dep2]
+    dataframe[max_transform_var] = np.minimum(column1, column2)
+
 def apply_cut_to_dataframe(dataframe, dep, cutrange, ignore_missing_columns=False):
   fr_cut = dataframe
   formatstring = "{:<40} {:<5.4}"
